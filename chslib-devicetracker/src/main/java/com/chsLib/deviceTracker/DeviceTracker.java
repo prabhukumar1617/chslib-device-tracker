@@ -140,10 +140,10 @@ public class DeviceTracker implements ServiceListener {
     }
 
     private void speakerFound(ChsSpeaker speaker) {
-        db.insertOrUpdateSpeaker(speaker);
-      /*  if (listener != null) {
+//        db.insertOrUpdateSpeaker(speaker);
+        if (listener != null) {
             listener.deviceFound(speaker);
-        }*/
+        }
     }
 
 }

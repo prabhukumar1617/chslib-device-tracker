@@ -1,4 +1,4 @@
-package com.chsLib.deviceTracker;
+package com.chsLib.deviceTracker.model;
 
 /**
  * Created by prabhu on 16/11/17.

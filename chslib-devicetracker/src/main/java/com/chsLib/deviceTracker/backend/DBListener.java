@@ -1,4 +1,4 @@
-package com.chsLib.deviceTracker.backendLib;
+package com.chsLib.deviceTracker.backend;
 
 public interface DBListener {
 

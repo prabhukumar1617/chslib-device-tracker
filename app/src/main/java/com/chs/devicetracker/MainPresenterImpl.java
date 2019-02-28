@@ -1,11 +1,14 @@
 package com.chs.devicetracker;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import com.chsLib.deviceTracker.SpeakerTracker;
 import com.chsLib.deviceTracker.SpeakerTrackerListener;
 import com.chsLib.deviceTracker.backend.DBInteractListener;
+import com.chsLib.deviceTracker.backend.DatabaseHelper;
 import com.chsLib.deviceTracker.model.ChsSpeaker;
 import com.chsLib.deviceTracker.DeviceTracker;
 import com.chsLib.deviceTracker.DeviceTrackerListener;
@@ -18,18 +21,16 @@ public class MainPresenterImpl implements MainPresenter {
     private final String TAG = MainPresenterImpl.class.toString();
     private MainView view;
     private Context context;
-    //    private SpeakerTracker speakerTracker;
-    private DeviceTracker deviceTracker;
-    private DBInteract dbInteract;
     private List<ChsSpeaker> dBSpeakersCache = new ArrayList<ChsSpeaker>();
-//    private List<ChsSpeaker> dBSpeakers = new ArrayList<ChsSpeaker>();
-
+    DeviceTracker deviceTracker;
+    DatabaseHelper db;
 
     public MainPresenterImpl(Context context) {
         this.context = context;
-//        speakerTracker = new SpeakerTracker(context, speakerTrackerListener);
-        dbInteract = new DBInteract(context, dbInteractListener);
         deviceTracker = new DeviceTracker(context, deviceTrackerListener);
+        db = DatabaseHelper.createOrOpenDB(context);
+        db.setListener(playerStatusUpdate);
+        db.setListener(dbInteractListener);
     }
 
     @Override
@@ -39,10 +40,7 @@ public class MainPresenterImpl implements MainPresenter {
         view.initViews();
         view.addListeners();
         Log.d(TAG, "setView: Listeners added");
-//        Log.d(TAG, "setView: speakerTracker " + speakerTracker);
-//        speakerTracker.refreshCachedSpeakers();
-        //  dBSpeakers = dbInteracter.getAllSpeakers();
-//        Log.d(TAG, "setView ---------: " + dBSpeakers.size());
+
     }
 
     @Override
@@ -52,44 +50,20 @@ public class MainPresenterImpl implements MainPresenter {
 
     @Override
     public void stopSpeakerDiscovery() {
-        deviceTracker.startDeviceTracking();
+        deviceTracker.stopDeviceTracking();
 
     }
 
     @Override
     public void clearSpeakerList() {
-        dbInteract.deleteAllSpeaker();
+        db.deleteSpeakers();
     }
 
-    /*SpeakerTrackerListener speakerTrackerListener = new SpeakerTrackerListener() {
-        @Override
-        public void speakerListCache(List<ChsSpeaker> speakerList) {
-            Log.d(TAG, "speakerListCache: " + speakerList.toString());
-            view.updateSpeakerList(speakerList);
-        }
-
-        @Override
-        public void newSpeakerAdded(List<ChsSpeaker> speakerList, ChsSpeaker newSpeaker) {
-            Log.d(TAG, "newSpeakerAdded: " + newSpeaker.toString());
-            view.updateSpeakerList(speakerList);
-        }
-
-        @Override
-        public void speakerUpdated(List<ChsSpeaker> speakerList, ChsSpeaker updatedSpeaker) {
-            Log.d(TAG, "speakerUpdated: " + updatedSpeaker.toString());
-        }
-
-        @Override
-        public void speakerListRefreshed() {
-            Log.d(TAG, "speakerListRefreshed: ");
-            speakerTracker.getAllCachedSpeakerList();
-        }
-    };*/
 
     DeviceTrackerListener deviceTrackerListener = new DeviceTrackerListener() {
         @Override
         public void deviceFound(ChsSpeaker speaker) {
-
+            db.insertOrUpdateSpeaker(speaker);
         }
 
         @Override
@@ -119,7 +93,7 @@ public class MainPresenterImpl implements MainPresenter {
 
         @Override
         public void speakerUpdated(ChsSpeaker speaker) {
-            Log.d(TAG, "speakerUpdated: ");
+            Log.d(TAG, "speakerUpdated: " + speaker.toString());
             for (int i = 0; i <= dBSpeakersCache.size(); i++) {
                 if (dBSpeakersCache.get(i).getId().equalsIgnoreCase(speaker.getId())) {
                     dBSpeakersCache.get(i).setOnline(true);
@@ -137,4 +111,23 @@ public class MainPresenterImpl implements MainPresenter {
 //            listener.speakerListRefreshed();
         }
     };
+
+    private Handler playerStatusUpdate = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 1:
+                    Log.d(TAG, "handleMessage: 1");
+                    break;
+                case 2:
+                    Log.d(TAG, "handleMessage: 2 : Speaker updated");
+                    break;
+                case 3:
+                    break;
+                case 4:
+                    break;
+            }
+        }
+    };
+
 }

@@ -1,4 +1,4 @@
-package com.chsLib.deviceTracker;
+package com.chsLib.deviceTracker.util;
 
 import android.os.Process;
 
@@ -28,6 +28,7 @@ public class ThreadExecutor {
     };
     private static final ThreadPoolExecutor sExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE,
             KEEP_ALIVE, TimeUnit.SECONDS, sWorkQueue, sThreadFactory);
+
 
     public static void runTask(Runnable task) {
         sExecutor.execute(task);

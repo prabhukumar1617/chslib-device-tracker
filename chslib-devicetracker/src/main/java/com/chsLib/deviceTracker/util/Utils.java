@@ -1,4 +1,4 @@
-package com.chsLib.deviceTracker;
+package com.chsLib.deviceTracker.util;
 
 import android.content.Context;
 import android.net.ConnectivityManager;

@@ -4,10 +4,15 @@ import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
+import com.chsLib.deviceTracker.backend.DBInteract;
+import com.chsLib.deviceTracker.backend.DatabaseHelper;
 import com.chsLib.deviceTracker.jmdns.JmDNS;
 import com.chsLib.deviceTracker.jmdns.ServiceEvent;
 import com.chsLib.deviceTracker.jmdns.ServiceInfo;
 import com.chsLib.deviceTracker.jmdns.ServiceListener;
+import com.chsLib.deviceTracker.model.ChsSpeaker;
+import com.chsLib.deviceTracker.util.ThreadExecutor;
+import com.chsLib.deviceTracker.util.Utils;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -22,17 +27,22 @@ public class DeviceTracker implements ServiceListener {
     private static JmDNS jmdns = null;
     private static WifiManager.MulticastLock mLock = null;
     private DeviceTrackerListener listener;
+    //    private DBInteract dbInteracter;
+    private DatabaseHelper db;
+
 
     public DeviceTracker(Context context, DeviceTrackerListener listener) {
         this.mContext = context;
         this.listener = listener;
+        db = DatabaseHelper.createOrOpenDB(context);
+        Log.e(TAG, "DeviceTracker object created: ");
+//        dbInteracter = new DBInteract(context);
     }
 
     private void startProbe() throws Exception {
-        Log.d(TAG, "startProbe: ");
+        Log.e(TAG, "startProbe: ");
         if (jmdns != null)
-            stopProbe();
-
+            stopDeviceTracking();
         WifiManager wifi = (WifiManager) mContext.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         mLock = wifi.createMulticastLock("CHS_ASTER");
         mLock.setReferenceCounted(true);
@@ -43,6 +53,7 @@ public class DeviceTracker implements ServiceListener {
     }
 
     private void stopProbe() {
+        Log.e(TAG, "stopProbe: ");
         if (jmdns != null) {
             jmdns.removeServiceListener(TOUCH_ABLE_TYPE, this);
             try {
@@ -74,23 +85,25 @@ public class DeviceTracker implements ServiceListener {
     }
 
     public void stopDeviceTracking() {
-        stopProbe();
+        ThreadExecutor.runTask(new Runnable() {
+            public void run() {
+                try {
+                    stopProbe();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @Override
     public void serviceAdded(ServiceEvent event) {
-        Log.d(TAG, "serviceAdded: " + event.toString());
+        Log.e(TAG, "serviceAdded: " + event.toString());
     }
 
     @Override
     public void serviceRemoved(ServiceEvent event) {
-        Log.d(TAG, "serviceRemoved: " + event.toString());
-    }
-
-    @Override
-    public void serviceResolved(ServiceEvent event) {
-        Log.d(TAG, "serviceResolved: " + event.toString());
-
+        Log.e(TAG, "serviceRemoved: " + event.toString());
         String name, id, services, usbStatus, ipAddress, user, dbID, macAddress;
         ServiceInfo serviceInfo = event.getInfo();
         name = serviceInfo.getPropertyString("CtlN");
@@ -101,9 +114,36 @@ public class DeviceTracker implements ServiceListener {
         ipAddress = serviceInfo.getHostAddresses()[0];
         user = serviceInfo.getPropertyString("User");
         dbID = serviceInfo.getPropertyString("DbId");
-        Speaker speaker = new Speaker(id, name, ipAddress, macAddress, services, dbID, user, usbStatus);
-        if (listener != null) {
-            listener.DeviceFound(speaker);
-        }
+        ChsSpeaker speaker = new ChsSpeaker(id, name, ipAddress, macAddress, services, dbID, user, usbStatus, false);
+       /* if (listener != null) {
+            listener.deviceDisconnected(speaker);
+        }*/
     }
+
+    @Override
+    public void serviceResolved(ServiceEvent event) {
+        Log.e(TAG, "serviceResolved: " + event.toString());
+        String name, id, services, usbStatus, ipAddress, user, dbID, macAddress;
+        ServiceInfo serviceInfo = event.getInfo();
+
+        name = serviceInfo.getPropertyString("CtlN");
+        macAddress = serviceInfo.getPropertyString("Mac_Add");
+//        id = event.getName();
+        id = macAddress;
+        services = serviceInfo.getPropertyString("Service");
+        usbStatus = serviceInfo.getPropertyString("USB");
+        ipAddress = serviceInfo.getHostAddresses()[0];
+        user = serviceInfo.getPropertyString("User");
+        dbID = serviceInfo.getPropertyString("DbId");
+        ChsSpeaker speaker = new ChsSpeaker(id, name, ipAddress, macAddress, services, dbID, user, usbStatus, true);
+        speakerFound(speaker);
+    }
+
+    private void speakerFound(ChsSpeaker speaker) {
+        db.insertOrUpdateSpeaker(speaker);
+      /*  if (listener != null) {
+            listener.deviceFound(speaker);
+        }*/
+    }
+
 }

@@ -54,7 +54,7 @@ public class SpeakerTracker {
     DeviceTrackerListener deviceTrackerListener = new DeviceTrackerListener() {
         @Override
         public void deviceFound(ChsSpeaker speaker) {
-
+            dbInteract.insertOrUpdateSpeaker(speaker);
         }
 
         @Override

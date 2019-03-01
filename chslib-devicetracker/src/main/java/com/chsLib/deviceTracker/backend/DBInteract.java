@@ -22,6 +22,10 @@ public class DBInteract {
         Log.e(TAG, "DBInteract: Object Created");
     }
 
+    public void insertOrUpdateSpeaker(ChsSpeaker speakerCache) {
+        db.insertOrUpdateSpeaker(speakerCache);
+    }
+
     public List<ChsSpeaker> getAllSpeakers() {
         return db.getAllSpeakers();
     }

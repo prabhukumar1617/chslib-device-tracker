@@ -1,18 +1,11 @@
 package com.chs.devicetracker;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 
 import com.chsLib.deviceTracker.SpeakerTracker;
 import com.chsLib.deviceTracker.SpeakerTrackerListener;
-import com.chsLib.deviceTracker.backend.DBInteractListener;
-import com.chsLib.deviceTracker.backend.DatabaseHelper;
 import com.chsLib.deviceTracker.model.ChsSpeaker;
-import com.chsLib.deviceTracker.DeviceTracker;
-import com.chsLib.deviceTracker.DeviceTrackerListener;
-import com.chsLib.deviceTracker.backend.DBInteract;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,16 +14,13 @@ public class MainPresenterImpl implements MainPresenter {
     private final String TAG = MainPresenterImpl.class.toString();
     private MainView view;
     private Context context;
-    private List<ChsSpeaker> dBSpeakersCache = new ArrayList<ChsSpeaker>();
-    DeviceTracker deviceTracker;
-    DatabaseHelper db;
+    private SpeakerTracker speakerTracker;
+    private List<ChsSpeaker> dBSpeakers = new ArrayList<ChsSpeaker>();
+
 
     public MainPresenterImpl(Context context) {
         this.context = context;
-        deviceTracker = new DeviceTracker(context, deviceTrackerListener);
-        db = DatabaseHelper.createOrOpenDB(context);
-        db.setListener(playerStatusUpdate);
-        db.setListener(dbInteractListener);
+        speakerTracker = new SpeakerTracker(context, speakerTrackerListener);
     }
 
     @Override
@@ -40,93 +30,52 @@ public class MainPresenterImpl implements MainPresenter {
         view.initViews();
         view.addListeners();
         Log.d(TAG, "setView: Listeners added");
-
+        Log.d(TAG, "setView: speakerTracker " + speakerTracker);
+        speakerTracker.refreshCachedSpeakers();
+        Log.d(TAG, "setView ---------: " + dBSpeakers.size());
     }
 
     @Override
     public void startSpeakerDiscovery() {
-        deviceTracker.startDeviceTracking();
+        speakerTracker.startSpeakerDiscovery();
     }
 
     @Override
     public void stopSpeakerDiscovery() {
-        deviceTracker.stopDeviceTracking();
+        speakerTracker.stopSpeakerDiscovery();
 
     }
 
     @Override
     public void clearSpeakerList() {
-        db.deleteSpeakers();
+        speakerTracker.deleteCachedSpeakers();
     }
 
-
-    DeviceTrackerListener deviceTrackerListener = new DeviceTrackerListener() {
+    SpeakerTrackerListener speakerTrackerListener = new SpeakerTrackerListener() {
         @Override
-        public void deviceFound(ChsSpeaker speaker) {
-            db.insertOrUpdateSpeaker(speaker);
+        public void speakerListCache(List<ChsSpeaker> speakerList) {
+            Log.d(TAG, "speakerListCache: " + speakerList.toString());
+            view.updateSpeakerList(speakerList);
+            startSpeakerDiscovery();
         }
 
         @Override
-        public void deviceDisconnected(ChsSpeaker speaker) {
-
+        public void newSpeakerAdded(List<ChsSpeaker> speakerList, ChsSpeaker newSpeaker) {
+            Log.d(TAG, "newSpeakerAdded: " + newSpeaker.toString());
+            view.updateSpeakerList(speakerList);
         }
 
         @Override
-        public void onSpeakerUpdates() {
+        public void speakerUpdated(List<ChsSpeaker> speakerList, ChsSpeaker updatedSpeaker) {
+            Log.d(TAG, "speakerUpdated: " + updatedSpeaker.toString());
+            view.updateSpeakerList(speakerList);
 
-        }
-
-        @Override
-        public void onError(String message) {
-            Log.e(TAG, "onError: " + message);
-        }
-    };
-
-    DBInteractListener dbInteractListener = new DBInteractListener() {
-        @Override
-        public void newSpeakerAdded(ChsSpeaker speaker) {
-            dBSpeakersCache.add(speaker);
-            Log.d(TAG, "speakerListCache: " + speaker.toString());
-            view.updateSpeakerList(dBSpeakersCache);
-//            listener.newSpeakerAdded(dBSpeakersCache, speaker);
-        }
-
-        @Override
-        public void speakerUpdated(ChsSpeaker speaker) {
-            Log.d(TAG, "speakerUpdated: " + speaker.toString());
-            for (int i = 0; i <= dBSpeakersCache.size(); i++) {
-                if (dBSpeakersCache.get(i).getId().equalsIgnoreCase(speaker.getId())) {
-                    dBSpeakersCache.get(i).setOnline(true);
-                    break;
-                }
-            }
-            view.updateSpeakerList(dBSpeakersCache);
-//            listener.newSpeakerAdded(dBSpeakersCache, speaker);
         }
 
         @Override
         public void speakerListRefreshed() {
             Log.d(TAG, "speakerListRefreshed: ");
-
-//            listener.speakerListRefreshed();
-        }
-    };
-
-    private Handler playerStatusUpdate = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case 1:
-                    Log.d(TAG, "handleMessage: 1");
-                    break;
-                case 2:
-                    Log.d(TAG, "handleMessage: 2 : Speaker updated");
-                    break;
-                case 3:
-                    break;
-                case 4:
-                    break;
-            }
+            speakerTracker.getAllCachedSpeakerList();
         }
     };
 

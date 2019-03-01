@@ -20,23 +20,18 @@ import java.net.InetAddress;
 
 public class DeviceTracker implements ServiceListener {
     public final static String TAG = DeviceTracker.class.toString();
-
     private Context mContext;
     public final static String TOUCH_ABLE_TYPE = "_touch-able._tcp.local.";
     public final static String HOSTNAME = "chs_aster";
     private static JmDNS jmdns = null;
     private static WifiManager.MulticastLock mLock = null;
     private DeviceTrackerListener listener;
-    //    private DBInteract dbInteracter;
-    private DatabaseHelper db;
 
 
     public DeviceTracker(Context context, DeviceTrackerListener listener) {
         this.mContext = context;
         this.listener = listener;
-        db = DatabaseHelper.createOrOpenDB(context);
         Log.e(TAG, "DeviceTracker object created: ");
-//        dbInteracter = new DBInteract(context);
     }
 
     private void startProbe() throws Exception {
@@ -115,9 +110,9 @@ public class DeviceTracker implements ServiceListener {
         user = serviceInfo.getPropertyString("User");
         dbID = serviceInfo.getPropertyString("DbId");
         ChsSpeaker speaker = new ChsSpeaker(id, name, ipAddress, macAddress, services, dbID, user, usbStatus, false);
-       /* if (listener != null) {
+        if (listener != null) {
             listener.deviceDisconnected(speaker);
-        }*/
+        }
     }
 
     @Override
@@ -140,7 +135,6 @@ public class DeviceTracker implements ServiceListener {
     }
 
     private void speakerFound(ChsSpeaker speaker) {
-//        db.insertOrUpdateSpeaker(speaker);
         if (listener != null) {
             listener.deviceFound(speaker);
         }

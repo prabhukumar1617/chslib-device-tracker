@@ -9,5 +9,9 @@ public interface DeviceTrackerListener {
 
     public void onSpeakerUpdates();
 
-    public void onError(String message);
+    public void deviceSearchingFailed(String message);
+
+    public void deviceSearchingStarted();
+
+    public void deviceSearchingStopped();
 }

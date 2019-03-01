@@ -1,6 +1,7 @@
 package com.chsLib.deviceTracker;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 
 import com.chsLib.deviceTracker.backend.DBInteract;
@@ -17,6 +18,14 @@ public class SpeakerTracker {
     private DBInteract dbInteract;
     private List<ChsSpeaker> dBSpeakersCache = new ArrayList<ChsSpeaker>();
     private SpeakerTrackerListener listener;
+    Handler handler = new Handler();
+    Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            Log.d(TAG, "run: postDelayed stoped Device Discovery  ");
+            stopSpeakerDiscovery();
+        }
+    };
 
 
     public SpeakerTracker(Context context, SpeakerTrackerListener listener) {
@@ -26,8 +35,11 @@ public class SpeakerTracker {
         deviceTracker = new DeviceTracker(context, deviceTrackerListener);
     }
 
-    public void startSpeakerDiscovery() {
+    public void startSpeakerDiscovery(int min) {
         deviceTracker.startDeviceTracking();
+
+        handler.removeCallbacks(runnable);
+        handler.postDelayed(runnable, min * 1000);
     }
 
     public void stopSpeakerDiscovery() {
@@ -68,8 +80,18 @@ public class SpeakerTracker {
         }
 
         @Override
-        public void onError(String message) {
-            Log.e(TAG, "onError: " + message);
+        public void deviceSearchingFailed(String message) {
+            listener.speakerSearchingFailed(message);
+        }
+
+        @Override
+        public void deviceSearchingStarted() {
+            listener.speakerSearchingStarted();
+        }
+
+        @Override
+        public void deviceSearchingStopped() {
+            listener.speakerSearchingStopped();
         }
     };
 

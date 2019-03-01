@@ -37,7 +37,7 @@ public class MainPresenterImpl implements MainPresenter {
 
     @Override
     public void startSpeakerDiscovery() {
-        speakerTracker.startSpeakerDiscovery();
+        speakerTracker.startSpeakerDiscovery(5);
     }
 
     @Override
@@ -77,6 +77,22 @@ public class MainPresenterImpl implements MainPresenter {
             Log.d(TAG, "speakerListRefreshed: ");
             speakerTracker.getAllCachedSpeakerList();
         }
+
+        @Override
+        public void speakerSearchingStarted() {
+            Log.d(TAG, "speakerSearchingStarted: ");
+        }
+
+        @Override
+        public void speakerSearchingStopped() {
+            Log.d(TAG, "speakerSearchingStopped: ");
+        }
+
+        @Override
+        public void speakerSearchingFailed(String message) {
+            Log.d(TAG, "speakerSearchingFailed: ");
+        }
+
     };
 
 }

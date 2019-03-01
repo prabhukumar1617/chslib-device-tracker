@@ -45,6 +45,7 @@ public class DeviceTracker implements ServiceListener {
 
         jmdns = JmDNS.create(InetAddress.getByName(Utils.getFormattedIpAddress(mContext)), HOSTNAME);
         jmdns.addServiceListener(TOUCH_ABLE_TYPE, DeviceTracker.this);
+        listener.deviceSearchingStarted();
     }
 
     private void stopProbe() {
@@ -57,7 +58,7 @@ public class DeviceTracker implements ServiceListener {
             } catch (IOException e) {
                 e.printStackTrace();
                 if (listener != null)
-                    listener.onError(e.getMessage());
+                    listener.deviceSearchingFailed(e.getMessage());
             }
         }
 
@@ -65,6 +66,8 @@ public class DeviceTracker implements ServiceListener {
             mLock.release();
             mLock = null;
         }
+        listener.deviceSearchingStopped();
+
     }
 
     public void startDeviceTracking() {

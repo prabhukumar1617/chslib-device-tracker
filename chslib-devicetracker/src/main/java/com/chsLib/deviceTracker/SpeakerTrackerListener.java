@@ -13,4 +13,10 @@ public interface SpeakerTrackerListener {
     public void speakerUpdated(List<ChsSpeaker> speakerList, ChsSpeaker updatedSpeaker);
 
     public void speakerListRefreshed();
+
+    public void speakerSearchingStarted();
+
+    public void speakerSearchingStopped();
+
+    public void speakerSearchingFailed(String message);
 }
